@@ -1,28 +1,59 @@
-Index: ffi/Cargo.toml
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
+diff --git a/engine/src/lib.rs b/engine/src/lib.rs
+index 29089c6..18da454 100644
+--- a/engine/src/lib.rs
++++ b/engine/src/lib.rs
+@@ -73,7 +73,7 @@ mod range_set;
+ mod rhs_types;
+ mod searcher;
+ mod strict_partial_ord;
+-mod types;
++pub mod types;
+ 
+ pub use self::{
+     ast::{
+diff --git a/engine/src/list_matcher.rs b/engine/src/list_matcher.rs
+index da2c0fc..a2f326b 100644
+--- a/engine/src/list_matcher.rs
++++ b/engine/src/list_matcher.rs
+@@ -174,7 +174,7 @@ impl ListDefinition for NeverList {
+     }
+ 
+     fn is_valid_matcher(&self, matcher: &dyn Any) -> bool {
+-        matcher.is::<AlwaysListMatcher>()
++        matcher.is::<NeverListMatcher>()
+     }
+ }
+ 
+diff --git a/engine/src/rhs_types/list.rs b/engine/src/rhs_types/list.rs
+index 4521b3e..2c91ad4 100644
+--- a/engine/src/rhs_types/list.rs
++++ b/engine/src/rhs_types/list.rs
+@@ -22,7 +22,7 @@ impl<'i> Lex<'i> for ListName {
+             rest = iter.as_str();
+             match iter.next() {
+                 Some(c) => match c {
+-                    'a'..='z' | '0'..='9' | '_' => res.push(c),
++                    'a'..='z' | '0'..='9' | '_' | '.' => res.push(c),
+                     _ => {
+                         if res.is_empty() {
+                             return Err((
 diff --git a/ffi/Cargo.toml b/ffi/Cargo.toml
---- a/ffi/Cargo.toml	(revision 2334ab150abd803a555b1541a7e44891b7f5cc60)
-+++ b/ffi/Cargo.toml	(date 1639035151918)
-@@ -21,6 +21,7 @@
+index 752f9f0..c423bf1 100644
+--- a/ffi/Cargo.toml
++++ b/ffi/Cargo.toml
+@@ -21,6 +21,7 @@ fnv = "1.0.6"
  libc = "0.2.42"
  num_enum = "0.5"
  serde_json = "1.0.56"
 +percent-encoding = "2.1.0"
-
+ 
  [dependencies.wirefilter-engine]
  path = "../engine"
-Index: ffi/src/lib.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/ffi/src/lib.rs b/ffi/src/lib.rs
---- a/ffi/src/lib.rs	(revision 2334ab150abd803a555b1541a7e44891b7f5cc60)
-+++ b/ffi/src/lib.rs	(date 1639042359703)
-@@ -16,10 +16,7 @@
+index a65fe99..edb8572 100644
+--- a/ffi/src/lib.rs
++++ b/ffi/src/lib.rs
+@@ -16,10 +16,7 @@ use std::{
      io::{self, Write},
      net::IpAddr,
  };
@@ -31,13 +62,13 @@ diff --git a/ffi/src/lib.rs b/ffi/src/lib.rs
 -    Map, NeverList, ParseError, Scheme, Type,
 -};
 +use wirefilter::{AlwaysList, Array, ExecutionContext, FieldIndex, Filter, FilterAst, LhsValue, ListDefinition, Map, NeverList, ParseError, Scheme, Type, DefaultCompiler, FunctionArgs, SimpleFunctionDefinition, SimpleFunctionParam, FunctionArgKind, SimpleFunctionImpl, List, AlwaysListMatcher, NeverListMatcher};
-
+ 
  const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-@@ -131,6 +128,169 @@
-
+ 
+@@ -131,6 +128,169 @@ type SerializingResult = CResult<RustAllocatedString>;
+ 
  type HashingResult = CResult<u64>;
-
+ 
 +use wirefilter::types::GetType;
 +use crate::transfer_types::raw_ptr_repr::ExternPtrRepr;
 +
@@ -204,37 +235,3 @@ diff --git a/ffi/src/lib.rs b/ffi/src/lib.rs
  #[no_mangle]
  pub extern "C" fn wirefilter_create_scheme() -> RustBox<Scheme> {
      Default::default()
-Index: engine/src/lib.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/engine/src/lib.rs b/engine/src/lib.rs
---- a/engine/src/lib.rs	(revision 2334ab150abd803a555b1541a7e44891b7f5cc60)
-+++ b/engine/src/lib.rs	(date 1639034868536)
-@@ -73,7 +73,7 @@
- mod rhs_types;
- mod searcher;
- mod strict_partial_ord;
--mod types;
-+pub mod types;
-
- pub use self::{
-     ast::{
-Index: engine/src/list_matcher.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/engine/src/list_matcher.rs b/engine/src/list_matcher.rs
---- a/engine/src/list_matcher.rs	(revision 2334ab150abd803a555b1541a7e44891b7f5cc60)
-+++ b/engine/src/list_matcher.rs	(date 1639042607772)
-@@ -174,7 +174,7 @@
-     }
-
-     fn is_valid_matcher(&self, matcher: &dyn Any) -> bool {
--        matcher.is::<AlwaysListMatcher>()
-+        matcher.is::<NeverListMatcher>()
-     }
- }
-

@@ -160,6 +160,65 @@ function headersToMap(headers: Headers): Map<string, string[]> {
     return map;
 }
 
+export enum RuleAction {
+  ALLOW = 'ALLOW',
+  BLOCK = 'BLOCK',
+  LOG = 'LOG',
+  CHALLENGE = 'CHALLENGE',
+}
+
+export interface CFRule {
+  action: RuleAction,
+  rule: FirewallRule,
+  description: string,
+}
+
+export interface MatchedRule {
+  description: string
+  action: RuleAction
+}
+
+export class MultiFirewall {
+  private readonly fw: Firewall;
+  private readonly rules: CFRule[]
+
+  constructor() {
+    this.fw = new Firewall();
+    this.rules = [];
+  }
+
+  addRule(desc: string, action: RuleAction, expression: string): void {
+    const rule = this.fw.createRule(expression);
+    this.rules.push({
+      rule: rule,
+      action: action,
+      description: desc
+    });
+  }
+
+  exec(req: Request, passthrough?: boolean): MatchedRule[] {
+    const matches: MatchedRule[] = [];
+    for(const i of this.rules) {
+      const match = i.rule.match(req);
+      if (!match) {
+        // No match go to next rule
+        continue;
+      }
+      matches.push({
+        description: i.description,
+        action: i.action
+      });
+
+      // If rule is log or passthrough has been enabled then
+      // continue execution otherwise exit to mimic actual firewall behaviour
+      if (i.action != RuleAction.LOG && !passthrough) {
+        return matches;
+      }
+    }
+    return matches;
+  } 
+}
+
 /**
  * Firewall that defines the schema for the rules supported by the Cloudflare WAF language.
  *
